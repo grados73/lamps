@@ -2,10 +2,9 @@
  * Author: Grad
  * Date: 16.09.2020r
  * ZADANIA: 
- * CO JESLI JEST W JEDNYM MOMENCIE STOP, COFANIA I KIERUNEK -> WYLACZAMY STOP?
  * CO JESLI JEST KIERUNEK ZWYKŁY I WCISNIEMY STOP 
  * CO JESLI JEST KIERUNEK Z STOP/COFANIE I WYLACZYMY STOP -> DODAC FLAGE OD KIERUNKU I JAK WYLACZAMY STOP TO WCHODZI DO FUNKCJI ZWYKLEGO KIERUNKU
- * 
+ * OGARNAC CO JESLI STOP/ COFANIA I AWARYJNE, ZEBY POZYCJA GASLY
  *
  */
 
@@ -75,8 +74,15 @@ void loop() {
           break;
 
           case awaryjne: // SWIATLA AWARYJNE - OBA KIERUNKI SWIECA
-            swiatla_awaryjne();
-            aktualneZadanieKierunki = 2;
+            if(flagaTylStop or flagaTylCofanie){// JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
+              swiatla_awaryjne_tyl_stop_cofanie();
+              aktualneZadanieKierunki = 3;
+            }
+            else {// JESLI NIE JEST WLACZONE SWIATLO COFANIA / SWIATLO STOP
+                swiatla_awaryjne();
+                aktualneZadanieKierunki = 2;
+                aktualneDaneLampaTyl = 0;
+            }
           break;
           
           case kierunekLewy:  // KIERUNEK LEWY
@@ -129,6 +135,8 @@ void loop() {
             clearLed12t();
             aktualneZadanieKierunki = 12;
             if(flagaTylStop == 1) aktualneDaneLampaTyl= 1;
+            else if(flagaTylDzien == 1 && flagaTylStop == 0) aktualneDaneLampaTyl= 5; // jest pozycja dzien, ale nie ma stop
+            else if(flagaTylStop == 1) aktualneDaneLampaTyl= 1; //
             if( flagaTylCofanie == 1) aktualneDaneLampaTyl= 7;
           break;
 
@@ -159,6 +167,7 @@ void loop() {
     }
 // ################ AKTUALNY STAN LAMP #########################
   if(aktualneZadanieKierunki == 2) swiatla_awaryjne();
+  if(aktualneZadanieKierunki == 3)  swiatla_awaryjne_tyl_stop_cofanie();
   if(aktualneZadanieKierunki == 6) kierunkowskazy_tyl(6);
   if(aktualneZadanieKierunki == 9) kierunkowskazy_tyl(9);    
   if(aktualneDaneLampaTyl == 1) {
@@ -166,6 +175,7 @@ void loop() {
     if(flagaTylCofanie == 1) swiatlo_cofania(flagaTylDzien);
   }
     else if(aktualneDaneLampaTyl == 5) swiatlo_dzien_tyl();
+  if(aktualneDaneLampaTyl == 15) ;
   if(aktualneDaneLampaTyl == 7) swiatlo_cofania(flagaTylDzien);
   if( aktualneDaneLampaTyl == 91)kierunkowskazy_tyl_stop_cofanie(9);
   if( aktualneDaneLampaTyl == 61)kierunkowskazy_tyl_stop_cofanie(6);
@@ -194,6 +204,26 @@ void swiatla_awaryjne() // OBYDWA KIERUNKOWSKAZY
         strip1t.show();
         strip2t.show();
         delay(opoznienieZmianyMigacza);   
+        }
+}
+void swiatla_awaryjne_tyl_stop_cofanie(){
+         for( int i = ledCount/2; i >= 0; i--){  
+         strip1t.setPixelColor(i, strip1t.Color(255, 215, 0));
+         strip2t.setPixelColor(i, strip2t.Color(255, 215, 0));
+         delay(opoznienieZmianyMigacza+10);
+         if( i< ledCount/2-dlugoscMigacza+1){ //gaszenie paska od poczatku
+                strip1t.setPixelColor(i+dlugoscMigacza, strip1t.Color(0, 0, 0));
+                strip2t.setPixelColor(i+dlugoscMigacza, strip2t.Color(0, 0, 0));
+         }
+          strip2t.show();
+          strip1t.show();
+          }
+       for(int k = dlugoscMigacza-1; k >= 0 ; k--){  //gaszenie koncowki paska (znikanie)
+           strip1t.setPixelColor(k, strip1t.Color(0, 0, 0));
+           strip2t.setPixelColor(k, strip1t.Color(0, 0, 0));
+           strip1t.show();
+           strip2t.show();
+           delay(opoznienieZmianyMigacza+10);   
         }
 }
 
