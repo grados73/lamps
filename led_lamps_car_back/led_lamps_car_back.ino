@@ -135,7 +135,9 @@ void loop() {
           case wylaczStop: // WYLACZANIE STOPU - LAMPA TYL
             clearLed12t();
             flagaTylStop = 0;
-            aktualneDaneLampaTyl = 0;    //WERSJA Z WYLACZANIEM SWIATEL DZIENNYCH5
+            if(flagaTylDzien = 0) aktualneDaneLampaTyl = 0;    //WERSJA Z WYLACZANIEM SWIATEL DZIENNYCH5
+            if(flagaTylDzien = 1) aktualneDaneLampaTyl = 5;
+            if(flagaTylCofanie == 1) aktualneDaneLampaTyl = 7;
             
           break;
 
@@ -143,6 +145,7 @@ void loop() {
             clearLed12t();
             flagaTylCofanie = 0;
             if(flagaTylDzien == 0) aktualneDaneLampaTyl = 0;
+            else if(flagaTylStop == 1) aktualneDaneLampaTyl = 1;
             else aktualneDaneLampaTyl = 5; 
           break;  
 
@@ -158,7 +161,10 @@ void loop() {
   if(aktualneZadanieKierunki == 2) swiatla_awaryjne();
   if(aktualneZadanieKierunki == 6) kierunkowskazy_tyl(6);
   if(aktualneZadanieKierunki == 9) kierunkowskazy_tyl(9);    
-  if(aktualneDaneLampaTyl == 1) swiatlo_stop();
+  if(aktualneDaneLampaTyl == 1) {
+    swiatlo_stop();
+    if(flagaTylCofanie == 1) swiatlo_cofania(flagaTylDzien);
+  }
     else if(aktualneDaneLampaTyl == 5) swiatlo_dzien_tyl();
   if(aktualneDaneLampaTyl == 7) swiatlo_cofania(flagaTylDzien);
   if( aktualneDaneLampaTyl == 91)kierunkowskazy_tyl_stop_cofanie(9);
