@@ -12,8 +12,6 @@
 #include <Adafruit_NeoPixel.h>
 
 #define ledCount 30 //ilosc diod w pasku
-#define ledStripPin1 10 // podlaczenie lewego paska przod
-#define ledStripPin2 9 //podlaczenie prawego paska przod
 #define ledStripPin1t 12 //podlaczenie lewego paska tyl
 #define ledStripPin2t 11 //podlaczenie prawego paska tyl
 #define Brightness 5 // max 255 - jasnosc
@@ -23,7 +21,6 @@
 //Sygnaly sterujace
 #define sstop 1  // swiatlo stopu
 #define swiatlaDzienTyl 5 
-#define swiatloDzienPrzod 3
 #define swiatlaCofania 7
 #define awaryjne 2 //swiatla awaryjne
 #define kierunekPrawy 9
@@ -33,13 +30,9 @@
 #define wylaczKierunki 12
 #define wylaczStop 11
 #define wylaczSwiatlaCofania 17
-#define wylaczLampaPrzod 13
 #define wylaczDzienTyl 15
 
 
-
-Adafruit_NeoPixel strip1(ledCount, ledStripPin1, NEO_GRB + NEO_KHZ800); //przod lewy
-Adafruit_NeoPixel strip2(ledCount, ledStripPin2, NEO_GRB + NEO_KHZ800); // przod prawy
 Adafruit_NeoPixel strip1t(ledCount, ledStripPin1t, NEO_GRB + NEO_KHZ800); // tyl lewy
 Adafruit_NeoPixel strip2t(ledCount, ledStripPin2t, NEO_GRB + NEO_KHZ800); //tyl prawy
 
@@ -47,7 +40,6 @@ Adafruit_NeoPixel strip2t(ledCount, ledStripPin2t, NEO_GRB + NEO_KHZ800); //tyl 
 String odebraneDane = ""; //Pusty ciąg odebranych danych
 int aktualneZadanieKierunki = 0;
 int aktualneDaneLampaTyl = 0;
-int aktualneDaneLampaPrzod = 0;
 int odebraneDaneInt = 0;
 int flagaTylDzien = 0;
 int flagaTylStop = 0;
@@ -56,15 +48,10 @@ int flagaTylCofanie = 0;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200); //inicjalizacji transmisji szeregowej - ustawic predkosc na !!!115200!!!
-  strip1.begin(); // INICJALIZACJA PASKOW
-  strip2.begin();
-  strip1.setBrightness(Brightness); //poziom intenyswnosci swiecenia
-  strip2.setBrightness(Brightness); //poziom intenyswnosci swiecenia
   strip1t.begin();
   strip2t.begin();
   strip1t.setBrightness(Brightness); //poziom intenyswnosci swiecenia
   strip2t.setBrightness(Brightness); //poziom intenyswnosci swiecenia
-  clearLed12();
   clearLed12t();
 }
 
@@ -77,24 +64,22 @@ void loop() {
         switch(odebraneDaneInt){
           case sstop:  // SWIATLO STOP - LAMPA TYL
             flagaTylStop = 1;
-            swiatlo_stop();
-            aktualneDaneLampaTyl = 1;
+            if(flagaTylCofanie == 0){ // wcisniety stop kiedy nie ma swiatla cofania
+                swiatlo_stop();
+                aktualneDaneLampaTyl = 1; 
+            }
+            else if(flagaTylCofanie == 1){
+                swiatlo_stop();
+                aktualneDaneLampaTyl = 1; 
+            }
           break;
-
-          case swiatloDzienPrzod:
-            swiatlo_dzien_przod();  //SWIATLA DO JAZDY DZIENNEJ - LAMPA PRZOD
-            aktualneDaneLampaPrzod = 3;   
-          break;  
 
           case awaryjne: // SWIATLA AWARYJNE - OBA KIERUNKI SWIECA
             swiatla_awaryjne();
-            aktualneDaneLampaPrzod = 0; //WERSJA Z WYLACZANIEM SWIATEL DZIENNYCH
             aktualneZadanieKierunki = 2;
           break;
           
           case kierunekLewy:  // KIERUNEK LEWY
-            kierunkowskazy(6);
-            aktualneDaneLampaPrzod = 0; //WERSJA Z WYLACZANIEM SWIATEL DZIENNYCH
             if(flagaTylStop or flagaTylCofanie){ // JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
                 kierunkowskazy_tyl_stop_cofanie(6);
                 aktualneDaneLampaTyl =61;
@@ -107,8 +92,6 @@ void loop() {
           break;
 
           case kierunekPrawy: // KIERUNEK PRAWY
-            kierunkowskazy(9);
-            aktualneDaneLampaPrzod = 0; //WERSJA Z WYLACZANIEM SWIATEL DZIENNYCH
             if(flagaTylStop or flagaTylCofanie){ // JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
                 kierunkowskazy_tyl_stop_cofanie(9);
                 aktualneDaneLampaTyl =91;
@@ -134,17 +117,16 @@ void loop() {
           break;
           
           case wlaczenieSystemu: //  ANIMACJA URUCHAMIANIA SYSTEMU
-              inicjalizacja_systemu();
- //             aktualneDaneLampaPrzod = 3; - AUTOMATYCZNE SWIATLA DZIENNE, W CELU WLACZENIA PO INICJALIZACJI ODKOMENTOWAC!
+                 swiatlo_dzien_tyl();
+                 flagaTylDzien = 1;
           break;
 
           case wylaczanieSystemu: // ANIMACJA WYLACZANIA SYSTEMU
-              wylaczanie_systemu();
-              aktualneDaneLampaPrzod = 0;
+              flagaTylDzien = 0;
           break;
  
           case wylaczKierunki: //WYLACZ AWARYJNE / WYLACZ KIERUNKI
-            clearLed12();
+            clearLed12t();
             aktualneZadanieKierunki = 12;
             if(flagaTylStop == 1) aktualneDaneLampaTyl= 1;
             if( flagaTylCofanie == 1) aktualneDaneLampaTyl= 7;
@@ -162,12 +144,7 @@ void loop() {
             flagaTylCofanie = 0;
             if(flagaTylDzien == 0) aktualneDaneLampaTyl = 0;
             else aktualneDaneLampaTyl = 5; 
-          break;
-
-          case wylaczLampaPrzod:  // WYLACZ SWIATLA DZIENNE - LAMPA PRZOD
-            clearLed12();
-            aktualneDaneLampaPrzod = 13;   
-          break;     
+          break;  
 
           case wylaczDzienTyl: // WYLACZ SWIATLA DZIENNE - LAMPA TYL
             clearLed12t();
@@ -179,12 +156,11 @@ void loop() {
     }
 // ################ AKTUALNY STAN LAMP #########################
   if(aktualneZadanieKierunki == 2) swiatla_awaryjne();
-  if(aktualneZadanieKierunki == 6) kierunkowskazy(6), kierunkowskazy_tyl(6);
-  if(aktualneZadanieKierunki == 9) kierunkowskazy(9), kierunkowskazy_tyl(9);    
+  if(aktualneZadanieKierunki == 6) kierunkowskazy_tyl(6);
+  if(aktualneZadanieKierunki == 9) kierunkowskazy_tyl(9);    
   if(aktualneDaneLampaTyl == 1) swiatlo_stop();
     else if(aktualneDaneLampaTyl == 5) swiatlo_dzien_tyl();
   if(aktualneDaneLampaTyl == 7) swiatlo_cofania(flagaTylDzien);
-  if(aktualneDaneLampaPrzod == 3) swiatlo_dzien_przod();
   if( aktualneDaneLampaTyl == 91)kierunkowskazy_tyl_stop_cofanie(9);
   if( aktualneDaneLampaTyl == 61)kierunkowskazy_tyl_stop_cofanie(6);
 }
@@ -195,58 +171,24 @@ void loop() {
 void swiatla_awaryjne() // OBYDWA KIERUNKOWSKAZY
 {
   for( int i = ledCount-1; i >= 0; i--){  
-     strip1.setPixelColor(i, strip1.Color(255, 215, 0));
-     strip2.setPixelColor(i, strip2.Color(255, 215, 0));
+     strip1t.setPixelColor(i, strip1t.Color(255, 215, 0));
+     strip2t.setPixelColor(i, strip2t.Color(255, 215, 0));
      delay(opoznienieZmianyMigacza);
    
        if( i< ledCount-dlugoscMigacza){ //gaszenie paska od poczatku
-        strip1.setPixelColor(i+dlugoscMigacza, strip1.Color(0, 0, 0));
-        strip2.setPixelColor(i+dlugoscMigacza, strip2.Color(0, 0, 0));
+        strip1t.setPixelColor(i+dlugoscMigacza, strip1t.Color(0, 0, 0));
+        strip2t.setPixelColor(i+dlugoscMigacza, strip2t.Color(0, 0, 0));
        }
-     strip1.show();
-     strip2.show();
+     strip1t.show();
+     strip2t.show();
      }
         for(int k = dlugoscMigacza; k >= 0 ; k--){  //gaszenie koncowki paska (znikanie)
-        strip1.setPixelColor(k, strip1.Color(0, 0, 0));
-        strip2.setPixelColor(k, strip2.Color(0, 0, 0));
-        strip1.show();
-        strip2.show();
+        strip1t.setPixelColor(k, strip1t.Color(0, 0, 0));
+        strip2t.setPixelColor(k, strip2t.Color(0, 0, 0));
+        strip1t.show();
+        strip2t.show();
         delay(opoznienieZmianyMigacza);   
         }
-}
-
-void kierunkowskazy(int ktory){ // JEDEN KIERUNKOWSKAZ, PRZYJMUJE ZMIENNA WSKAZUJACA KTORY - 6 -LEWY, 9 -PRAWY
-    if(ktory == 6){ //lewy
-      clearLed1();
-       for( int i = ledCount-1; i >= 0; i--){  
-         strip1.setPixelColor(i, strip1.Color(255, 215, 0));
-         delay(opoznienieZmianyMigacza);
-         if( i< ledCount-dlugoscMigacza){ //gaszenie paska od poczatku
-                strip1.setPixelColor(i+dlugoscMigacza, strip1.Color(0, 0, 0));
-         }
-          strip1.show();
-          }
-       for(int k = dlugoscMigacza; k >= 0 ; k--){  //gaszenie koncowki paska (znikanie)
-           strip1.setPixelColor(k, strip1.Color(0, 0, 0));
-           strip1.show();
-           delay(opoznienieZmianyMigacza);   
-        }
-  }
-    else if(ktory == 9){ //prawy
-       for( int i = ledCount-1; i >= 0; i--){  
-         strip2.setPixelColor(i, strip2.Color(255, 215, 0));
-         delay(opoznienieZmianyMigacza);
-         if( i< ledCount-dlugoscMigacza){ //gaszenie paska od poczatku
-                strip2.setPixelColor(i+dlugoscMigacza, strip1.Color(0, 0, 0));
-         }
-          strip2.show();
-          }
-       for(int k = dlugoscMigacza; k >= 0 ; k--){  //gaszenie koncowki paska (znikanie)
-           strip2.setPixelColor(k, strip2.Color(0, 0, 0));
-           strip2.show();
-           delay(opoznienieZmianyMigacza);   
-        }
-  }
 }
 
 void kierunkowskazy_tyl(int ktory){ // JEDEN KIERUNKOWSKAZ, PRZYJMUJE ZMIENNA WSKAZUJACA KTORY - 6 -LEWY, 9 -PRAWY
@@ -317,95 +259,6 @@ void kierunkowskazy_tyl_stop_cofanie(int ktory){
 
 //################## LAMPA PRZOD FUNKCJE ################################
   
-void swiatlo_dzien_przod(){
-  for (int i = 0; i < int(ledCount/3); i++) {
-    strip1.setPixelColor(i, strip1.Color(255, 255, 255));
-    strip2.setPixelColor(i, strip2.Color(255, 255, 255));
-  }
-  strip1.show();
-  strip2.show();
-}
-
-void inicjalizacja_systemu(){
-  //// PASEK RUSZA W PRAWO
-  for( int i = 0; i < ledCount; i++){  
-     strip1.setPixelColor(i, strip1.Color(255, 255, 255));
-     strip2.setPixelColor(i, strip2.Color(255, 255, 255));
-     delay(opoznienieZmianyMigacza);
-   
-       if( i >= dlugoscMigacza){ //gaszenie paska od poczatku
-        strip1.setPixelColor(i-dlugoscMigacza, strip1.Color(0, 0, 0));
-        strip2.setPixelColor(i-dlugoscMigacza, strip2.Color(0, 0, 0));
-       }
-     strip1.show();
-     strip2.show();
-     } /// MA NIE ZNIKAC CALKIEM DO SRODKA, JAKBY MIAL ZNIKNAC TO ODKOMENTOWAC TO PODSPODEM
-//        for(int k = (ledCount-dlugoscMigacza); k <= ledCount ; k++){  //gaszenie koncowki paska (znikanie)
-//        strip1.setPixelColor(k, strip1.Color(0, 0, 0));
-//        strip2.setPixelColor(k, strip2.Color(0, 0, 0));
-//        strip1.show();
-//        strip2.show();
-//        delay(opoznienieZmianyMigacza);   
-//        }
-
-  for( int i = ledCount-(dlugoscMigacza-1); i >= 0; i--){  // pasek rusza w lewo
-     strip1.setPixelColor(i, strip1.Color(255, 255, 255));
-     strip2.setPixelColor(i, strip2.Color(255, 255, 255));
-     delay(opoznienieZmianyMigacza);
-
-     if( i< ledCount-dlugoscMigacza){ 
-        strip1.setPixelColor(i+dlugoscMigacza+2, strip1.Color(0, 0, 0));
-        strip2.setPixelColor(i+dlugoscMigacza+2, strip2.Color(0, 0, 0));
-       }
-     strip1.show();
-     strip2.show();
-     } // WERSJA BEZ AUTOMATYCZNYCH SWIATEL DZIENNYCH USUNAC FOR PONIZEJ ZEBY ZOSTALY DZIENNE
-            for(int k = dlugoscMigacza+1; k >= 0 ; k--){  //gaszenie koncowki paska (znikanie)
-                strip1.setPixelColor(k, strip1.Color(0, 0, 0));
-                strip2.setPixelColor(k, strip2.Color(0, 0, 0));
-                strip1.show();
-                strip2.show();
-                delay(opoznienieZmianyMigacza);   
-        }
-     
-}
-
-void wylaczanie_systemu(){
-     for( int i = (0+dlugoscMigacza); i < ledCount; i++){  // pasek rusza w prawo
-         strip1.setPixelColor(i, strip1.Color(255, 255, 255));
-         strip2.setPixelColor(i, strip2.Color(255, 255, 255));
-         delay(opoznienieZmianyMigacza);
-       
-             if( i >= dlugoscMigacza){ //gaszenie paska od poczatku
-              strip1.setPixelColor(i-dlugoscMigacza, strip1.Color(0, 0, 0));
-              strip2.setPixelColor(i-dlugoscMigacza, strip2.Color(0, 0, 0));
-             }
-         strip1.show();
-         strip2.show();
-     }
-     
-     for( int i = ledCount-dlugoscMigacza; i >= 0; i--){  // pasek rusza w lewo
-           strip1.setPixelColor(i, strip1.Color(255, 255, 255));
-           strip2.setPixelColor(i, strip2.Color(255, 255, 255));
-           delay(opoznienieZmianyMigacza);
-         
-               if( i< ledCount-dlugoscMigacza){ //gaszenie paska od poczatku
-                  strip1.setPixelColor(i+dlugoscMigacza, strip1.Color(0, 0, 0));
-                  strip2.setPixelColor(i+dlugoscMigacza, strip2.Color(0, 0, 0));
-               }
-           strip1.show();
-           strip2.show();
-           }
-              for(int k = dlugoscMigacza; k >= 0 ; k--){  //gaszenie koncowki paska (znikanie)
-                    strip1.setPixelColor(k, strip1.Color(0, 0, 0));
-                    strip2.setPixelColor(k, strip2.Color(0, 0, 0));
-                    strip1.show();
-                    strip2.show();
-                    delay(opoznienieZmianyMigacza);   
-              }
-}
-
-
 //################## LAMPA TYL FUNKCJE ################################
 
 void swiatlo_stop(){
@@ -439,41 +292,9 @@ void swiatlo_cofania(int flagaDzienTyl){
 
 
 // Funkcja Macka
-void testSwiatel() {
-  for (int i = 0; i < ledCount; i++) {
-    strip1.setPixelColor(i, strip1.Color(255, 215, 0));
-    strip2.setPixelColor(i, strip2.Color(127, 105, 0));
 
-    // delay(10);
-  }
-  strip1.show();
-  strip2.show();
-}
 
 //######################## FUNKCJE CZYSZCZENIA PASKOW ############################
-void clearLed1() {
-  for (int i = 0; i < ledCount; i++) {
-    strip1.setPixelColor(i, 0, 0, 0);
-  }
-  strip1.show();  
-}
-
-void clearLed2() {
-  for (int i = 0; i < ledCount; i++) {
-    strip2.setPixelColor(i, 0, 0, 0);
-  }
-  strip2.show();  
-}
-
-void clearLed12() {
-  for (int i = 0; i < ledCount; i++) {
-    strip1.setPixelColor(i, 0, 0, 0);
-    strip2.setPixelColor(i, 0, 0, 0);
-    
-  } 
-  strip1.show();
-  strip2.show();
-}
 
 void clearLed1t() {
   for (int i = 0; i < ledCount; i++) {
