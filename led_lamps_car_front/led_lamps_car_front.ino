@@ -26,8 +26,6 @@
 #define wylaczLampaPrzod 13
 
 
-
-
 Adafruit_NeoPixel strip1(ledCount, ledStripPin1, NEO_GRB + NEO_KHZ800); //przod lewy
 Adafruit_NeoPixel strip2(ledCount, ledStripPin2, NEO_GRB + NEO_KHZ800); // przod prawy
 

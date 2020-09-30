@@ -2,9 +2,6 @@
  * Author: Grad
  * Date: 16.09.2020r
  * ZADANIA: 
- * CO JESLI JEST KIERUNEK ZWYKŁY I WCISNIEMY STOP 
- * CO JESLI JEST KIERUNEK Z STOP/COFANIE I WYLACZYMY STOP -> DODAC FLAGE OD KIERUNKU I JAK WYLACZAMY STOP TO WCHODZI DO FUNKCJI ZWYKLEGO KIERUNKU
- * OGARNAC CO JESLI STOP/ COFANIA I AWARYJNE, ZEBY POZYCJA GASLY
  *
  */
 
@@ -43,6 +40,7 @@ int odebraneDaneInt = 0;
 int flagaTylDzien = 0;
 int flagaTylStop = 0;
 int flagaTylCofanie = 0;
+int flagaKierunek = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -71,11 +69,14 @@ void loop() {
                 swiatlo_stop();
                 aktualneDaneLampaTyl = 1; 
             }
+            
           break;
 
           case awaryjne: // SWIATLA AWARYJNE - OBA KIERUNKI SWIECA
+          flagaKierunek = 1;
             if(flagaTylStop or flagaTylCofanie){// JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
               swiatla_awaryjne_tyl_stop_cofanie();
+              if(flagaTylCofanie == 1) aktualneDaneLampaTyl = 7;
               aktualneZadanieKierunki = 3;
             }
             else {// JESLI NIE JEST WLACZONE SWIATLO COFANIA / SWIATLO STOP
@@ -86,6 +87,7 @@ void loop() {
           break;
           
           case kierunekLewy:  // KIERUNEK LEWY
+              flagaKierunek = 1;
             if(flagaTylStop or flagaTylCofanie){ // JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
                 kierunkowskazy_tyl_stop_cofanie(6);
                 aktualneDaneLampaTyl =61;
@@ -98,6 +100,7 @@ void loop() {
           break;
 
           case kierunekPrawy: // KIERUNEK PRAWY
+              flagaKierunek = 1;
             if(flagaTylStop or flagaTylCofanie){ // JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
                 kierunkowskazy_tyl_stop_cofanie(9);
                 aktualneDaneLampaTyl =91;
@@ -133,6 +136,7 @@ void loop() {
  
           case wylaczKierunki: //WYLACZ AWARYJNE / WYLACZ KIERUNKI
             clearLed12t();
+            flagaKierunek =0;
             aktualneZadanieKierunki = 12;
             if(flagaTylStop == 1) aktualneDaneLampaTyl= 1;
             else if(flagaTylDzien == 1 && flagaTylStop == 0) aktualneDaneLampaTyl= 5; // jest pozycja dzien, ale nie ma stop
