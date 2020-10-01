@@ -35,12 +35,15 @@ Adafruit_NeoPixel strip2t(ledCount, ledStripPin2t, NEO_GRB + NEO_KHZ800); //tyl 
 
 String odebraneDane = ""; //Pusty ciąg odebranych danych
 int aktualneZadanieKierunki = 0;
-int aktualneDaneLampaTyl = 0;
+int aktualneDaneLampaTyl = 0; //dot STOPU, dzien, cofania
 int odebraneDaneInt = 0;
-int flagaTylDzien = 0;
-int flagaTylStop = 0;
-int flagaTylCofanie = 0;
-int flagaKierunek = 0;
+int ktoryKierunek = 0;
+int flagaTylDzien = 0;  // 1 oznacza ze sa dzien tyl
+int flagaTylDzienAwaryjne = 0; // 1 oznacza, ze sa tyl dzien, 1 tu i 0 flagaTylDzien oznacza, ze zostaly wylaczone na czas kierunkow
+int flagaTylStop = 0;  // 1 oznacza, ze tyl stop dziala
+int flagaTylCofanie = 0; // 1 oznacza, ze tyl cofanie jest wlaczone
+int flagaKierunek = 0; // 1 oznacza, ze Kierunki sa wlaczone
+int flagaAwaryjne = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -60,33 +63,29 @@ void loop() {
 
         switch(odebraneDaneInt){
           case sstop:  // SWIATLO STOP - LAMPA TYL
-            flagaTylStop = 1;
-            if(flagaTylCofanie == 0){ // wcisniety stop kiedy nie ma swiatla cofania
+                flagaTylStop = 1;
                 swiatlo_stop();
                 aktualneDaneLampaTyl = 1; 
-            }
-            else if(flagaTylCofanie == 1){
-                swiatlo_stop();
-                aktualneDaneLampaTyl = 1; 
-            }
-            
           break;
 
           case awaryjne: // SWIATLA AWARYJNE - OBA KIERUNKI SWIECA
-          flagaKierunek = 1;
-            if(flagaTylStop or flagaTylCofanie){// JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
-              swiatla_awaryjne_tyl_stop_cofanie();
-              if(flagaTylCofanie == 1) aktualneDaneLampaTyl = 7;
-              aktualneZadanieKierunki = 3;
-            }
-            else {// JESLI NIE JEST WLACZONE SWIATLO COFANIA / SWIATLO STOP
-                swiatla_awaryjne();
-                aktualneZadanieKierunki = 2;
-                aktualneDaneLampaTyl = 0;
-            }
+            flagaAwaryjne =1;
+            flagaKierunek = 1;
+            flagaTylDzien = 0; //wylaczamy tyl dzien, zeby sie nie pokrywaly, wlaczymy je wylaczajac kierunki
+              if(flagaTylStop or flagaTylCofanie){// JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
+                swiatla_awaryjne_tyl_stop_cofanie(); // wersja z kierunkami od polowy swiatla
+                if(flagaTylCofanie == 1) aktualneDaneLampaTyl = 7;
+                aktualneZadanieKierunki = 3;
+              }
+              else {// JESLI NIE JEST WLACZONE SWIATLO COFANIA / SWIATLO STOP
+                  swiatla_awaryjne(); // wersja z zwyklymi kierunkami
+                  aktualneZadanieKierunki = 2;
+                  aktualneDaneLampaTyl = 0;
+              }
           break;
           
           case kierunekLewy:  // KIERUNEK LEWY
+              ktoryKierunek = 6;
               flagaKierunek = 1;
             if(flagaTylStop or flagaTylCofanie){ // JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
                 kierunkowskazy_tyl_stop_cofanie(6);
@@ -100,6 +99,7 @@ void loop() {
           break;
 
           case kierunekPrawy: // KIERUNEK PRAWY
+              ktoryKierunek = 9;
               flagaKierunek = 1;
             if(flagaTylStop or flagaTylCofanie){ // JESLI JEST ZAPALONE SWIATLO COFANIA / SWIATLO STOP
                 kierunkowskazy_tyl_stop_cofanie(9);
@@ -116,6 +116,7 @@ void loop() {
           case swiatlaDzienTyl: // SWIATLA DZIENNE - LAMPA TYL
             swiatlo_dzien_tyl();
             flagaTylDzien = 1;
+            flagaTylDzienAwaryjne = 1;
             aktualneDaneLampaTyl = 5; 
           break;
 
@@ -128,20 +129,25 @@ void loop() {
           case wlaczenieSystemu: //  ANIMACJA URUCHAMIANIA SYSTEMU
                  swiatlo_dzien_tyl();
                  flagaTylDzien = 1;
+                 flagaTylDzienAwaryjne = 1;
           break;
 
           case wylaczanieSystemu: // ANIMACJA WYLACZANIA SYSTEMU
               flagaTylDzien = 0;
+              flagaTylDzienAwaryjne = 0;
           break;
  
           case wylaczKierunki: //WYLACZ AWARYJNE / WYLACZ KIERUNKI
             clearLed12t();
             flagaKierunek =0;
+            flagaAwaryjne =0;
             aktualneZadanieKierunki = 12;
+            if(flagaTylDzienAwaryjne == 1) flagaTylDzien = 1; // jesli przed wlaczeniem kierunkow, przy zapallonym stopie dzialala pozycja to ja spowrotem wlaczamy
             if(flagaTylStop == 1) aktualneDaneLampaTyl= 1;
             else if(flagaTylDzien == 1 && flagaTylStop == 0) aktualneDaneLampaTyl= 5; // jest pozycja dzien, ale nie ma stop
             else if(flagaTylStop == 1) aktualneDaneLampaTyl= 1; //
             if( flagaTylCofanie == 1) aktualneDaneLampaTyl= 7;
+            ktoryKierunek = 0;
           break;
 
           case wylaczStop: // WYLACZANIE STOPU - LAMPA TYL
@@ -150,7 +156,15 @@ void loop() {
             if(flagaTylDzien = 0) aktualneDaneLampaTyl = 0;    //WERSJA Z WYLACZANIEM SWIATEL DZIENNYCH5
             if(flagaTylDzien = 1) aktualneDaneLampaTyl = 5;
             if(flagaTylCofanie == 1) aktualneDaneLampaTyl = 7;
-            
+            if(flagaKierunek == 1)  { // po wylaczeniu stopu, jesli byl zapalony kierunek, to trzeba go spowrotem zapalic
+                aktualneDaneLampaTyl = ktoryKierunek;
+                aktualneZadanieKierunki = ktoryKierunek; ;
+            }
+            if(flagaAwaryjne ==1) {
+              swiatla_awaryjne(); // wersja z zwyklymi kierunkami
+                  aktualneZadanieKierunki = 2;
+                  aktualneDaneLampaTyl = 0;
+            }
           break;
 
           case wylaczSwiatlaCofania: //  WYLACZ SWIATLA COFANIA - LAMPA TYL - ZOSTAJE POZYCJA
@@ -164,7 +178,10 @@ void loop() {
           case wylaczDzienTyl: // WYLACZ SWIATLA DZIENNE - LAMPA TYL
             clearLed12t();
             flagaTylDzien = 0;
+            flagaTylDzienAwaryjne = 0;
+            flagaTylDzienAwaryjne = 0;
             aktualneDaneLampaTyl = 0;
+            flagaTylDzienAwaryjne = 0;
           break;  
         }      
 
@@ -211,6 +228,12 @@ void swiatla_awaryjne() // OBYDWA KIERUNKOWSKAZY
         }
 }
 void swiatla_awaryjne_tyl_stop_cofanie(){
+
+                              for( int i = ledCount/2; i >= 0; i--){  
+                                       strip1t.setPixelColor(i, strip1t.Color(0, 0, 0));
+                                           strip2t.setPixelColor(i, strip2t.Color(0, 0, 0));
+                                           if( i< ledCount/2-dlugoscMigacza+1); //gaszenie paska od poczatku
+                                           }
          for( int i = ledCount/2; i >= 0; i--){  
          strip1t.setPixelColor(i, strip1t.Color(255, 215, 0));
          strip2t.setPixelColor(i, strip2t.Color(255, 215, 0));
@@ -233,7 +256,7 @@ void swiatla_awaryjne_tyl_stop_cofanie(){
 
 void kierunkowskazy_tyl(int ktory){ // JEDEN KIERUNKOWSKAZ, PRZYJMUJE ZMIENNA WSKAZUJACA KTORY - 6 -LEWY, 9 -PRAWY
     if(ktory == 6){ //lewy
-      clearLed1t();
+  //    clearLed1t();
        for( int i = ledCount-1; i >= 0; i--){  
          strip1t.setPixelColor(i, strip1t.Color(255, 215, 0));
          delay(opoznienieZmianyMigacza);
