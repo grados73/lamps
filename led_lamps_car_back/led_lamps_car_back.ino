@@ -113,6 +113,14 @@ void loop() {
               
           break;
 
+          case wlaczenieSystemu: //  ANIMACJA URUCHAMIANIA SYSTEMU
+              inicjalizacja_systemu();
+              swiatlo_dzien_tyl();
+              flagaTylDzien = 1;
+              flagaTylDzienAwaryjne = 1;
+              aktualneDaneLampaTyl = 5;
+          break;
+
           case swiatlaDzienTyl: // SWIATLA DZIENNE - LAMPA TYL
             swiatlo_dzien_tyl();
             flagaTylDzien = 1;
@@ -126,11 +134,6 @@ void loop() {
             aktualneDaneLampaTyl = 7;    
           break;
           
-          case wlaczenieSystemu: //  ANIMACJA URUCHAMIANIA SYSTEMU
-                 swiatlo_dzien_tyl();
-                 flagaTylDzien = 1;
-                 flagaTylDzienAwaryjne = 1;
-          break;
 
           case wylaczanieSystemu: // ANIMACJA WYLACZANIA SYSTEMU
               flagaTylDzien = 0;
@@ -323,6 +326,51 @@ void kierunkowskazy_tyl_stop_cofanie(int ktory){
 //################## LAMPA PRZOD FUNKCJE ################################
   
 //################## LAMPA TYL FUNKCJE ################################
+//################## INICJALIZACJA / WYLACZANIE SYSTEMU ###############
+void inicjalizacja_systemu(){
+    //// PASEK RUSZA W PRAWO
+    for( int i = 0; i < ledCount; i++){  
+       strip1t.setPixelColor(i, strip1t.Color(255, 0, 0));
+       strip2t.setPixelColor(i, strip2t.Color(255, 0, 0));
+       delay(opoznienieZmianyMigacza);
+     
+         if( i >= dlugoscMigacza){ //gaszenie paska od poczatku
+          strip1t.setPixelColor(i-dlugoscMigacza, strip1t.Color(0, 0, 0));
+          strip2t.setPixelColor(i-dlugoscMigacza, strip2t.Color(0, 0, 0));
+         }
+       strip1t.show();
+       strip2t.show();
+       } /// MA NIE ZNIKAC CALKIEM DO SRODKA, JAKBY MIAL ZNIKNAC TO ODKOMENTOWAC TO PODSPODEM
+  //        for(int k = (ledCount-dlugoscMigacza); k <= ledCount ; k++){  //gaszenie koncowki paska (znikanie)
+  //        strip1.setPixelColor(k, strip1.Color(0, 0, 0));
+  //        strip2.setPixelColor(k, strip2.Color(0, 0, 0));
+  //        strip1.show();
+  //        strip2.show();
+  //        delay(opoznienieZmianyMigacza);   
+  //        }
+  
+    for( int i = ledCount-(dlugoscMigacza-1); i >= 0; i--){  // pasek rusza w lewo
+       strip1t.setPixelColor(i, strip1t.Color(255, 0, 0));
+       strip2t.setPixelColor(i, strip2t.Color(255, 0, 0));
+       delay(opoznienieZmianyMigacza);
+  
+       if( i< ledCount-dlugoscMigacza){ 
+          strip1t.setPixelColor(i+dlugoscMigacza+2, strip1t.Color(0, 0, 0));
+          strip2t.setPixelColor(i+dlugoscMigacza+2, strip2t.Color(0, 0, 0));
+         }
+       strip1t.show();
+       strip2t.show();
+       } // WERSJA BEZ AUTOMATYCZNYCH SWIATEL DZIENNYCH USUNAC FOR PONIZEJ ZEBY ZOSTALY DZIENNE
+              for(int k = dlugoscMigacza+1; k >= 0 ; k--){  //gaszenie koncowki paska (znikanie)
+                  strip1t.setPixelColor(k, strip1t.Color(0, 0, 0));
+                  strip2t.setPixelColor(k, strip2t.Color(0, 0, 0));
+                  strip1t.show();
+                  strip2t.show();
+                  delay(opoznienieZmianyMigacza);   
+          }
+       
+}
+//###########################################################################################
 
 void swiatlo_stop(){
   for (int i = 0; i < ledCount; i++) {
