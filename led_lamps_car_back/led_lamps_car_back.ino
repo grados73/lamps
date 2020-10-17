@@ -136,8 +136,10 @@ void loop() {
           
 
           case wylaczanieSystemu: // ANIMACJA WYLACZANIA SYSTEMU
+              wylaczanie_systemu();
               flagaTylDzien = 0;
               flagaTylDzienAwaryjne = 0;
+              aktualneDaneLampaTyl = 0;
           break;
  
           case wylaczKierunki: //WYLACZ AWARYJNE / WYLACZ KIERUNKI
@@ -369,6 +371,41 @@ void inicjalizacja_systemu(){
                   delay(opoznienieZmianyMigacza);   
           }
        
+}
+
+void wylaczanie_systemu(){
+     for( int i = (0+dlugoscMigacza); i < ledCount; i++){  // pasek rusza w prawo
+         strip1t.setPixelColor(i, strip1t.Color(255, 0, 0));
+         strip2t.setPixelColor(i, strip2t.Color(255, 0, 0));
+         delay(opoznienieZmianyMigacza);
+       
+             if( i >= dlugoscMigacza){ //gaszenie paska od poczatku
+              strip1t.setPixelColor(i-dlugoscMigacza, strip1t.Color(0, 0, 0));
+              strip2t.setPixelColor(i-dlugoscMigacza, strip2t.Color(0, 0, 0));
+             }
+         strip1t.show();
+         strip2t.show();
+     }
+     
+     for( int i = ledCount-dlugoscMigacza; i >= 0; i--){  // pasek rusza w lewo
+           strip1t.setPixelColor(i, strip1t.Color(255, 0, 0));
+           strip2t.setPixelColor(i, strip2t.Color(255, 0, 0));
+           delay(opoznienieZmianyMigacza);
+         
+               if( i< ledCount-dlugoscMigacza){ //gaszenie paska od poczatku
+                  strip1t.setPixelColor(i+dlugoscMigacza, strip1t.Color(0, 0, 0));
+                  strip2t.setPixelColor(i+dlugoscMigacza, strip2t.Color(0, 0, 0));
+               }
+           strip1t.show();
+           strip2t.show();
+           }
+              for(int k = dlugoscMigacza; k >= 0 ; k--){  //gaszenie koncowki paska (znikanie)
+                    strip1t.setPixelColor(k, strip1t.Color(0, 0, 0));
+                    strip2t.setPixelColor(k, strip2t.Color(0, 0, 0));
+                    strip1t.show();
+                    strip2t.show();
+                    delay(opoznienieZmianyMigacza);   
+              }
 }
 //###########################################################################################
 
