@@ -179,7 +179,7 @@ void kierunkowskazy(int ktory){ // JEDEN KIERUNKOWSKAZ, PRZYJMUJE ZMIENNA WSKAZU
 //################## LAMPA PRZOD FUNKCJE ################################
   
 void swiatlo_dzien_przod(){
-  for (int i = 0; i < int(ledCount/3); i++) {
+  for (int i = 0; i < int(ledCount); i++) {
     strip1.setPixelColor(i, strip1.Color(255, 255, 255));
     strip2.setPixelColor(i, strip2.Color(255, 255, 255));
   }
