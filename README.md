@@ -21,7 +21,12 @@ Arduino IDE,
 WS2812B
 
 ## Code Examples
-Will be added.
+![Code_example1](./Images/kod1.bmp)
+
+Functions to controlling the lights:
+
+
+![Code_example2](./Images/kod2.bmp)
 
 ## Features
 - Power ON and OFF effects,
