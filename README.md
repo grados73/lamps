@@ -1,5 +1,5 @@
 # Electric Car Lamps
->The aim of this project was to create controller for controlling front and rear lights in an electric car.
+>The aim of this project was to create controller to change front and rear lights in an electric car.
 
 ## Table of contents
 * [General info](#general-info)
